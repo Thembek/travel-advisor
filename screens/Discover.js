@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView, View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
@@ -7,6 +7,7 @@ import { FontAwesome } from '@expo/vector-icons';
 
 import MenuContainer from '../components/MenuContainer';
 import ItemCardContainer from '../components/ItemCardContainer';
+import { getPlacesData } from '../api/index';
 
 const Discover = () => {
     const navigation = useNavigation();
@@ -14,12 +15,26 @@ const Discover = () => {
     const [type, setType] = useState("restaurants");
     const [isLoading, setIsLoading] = useState(false);
     const [mainData, setMainData] = useState([]);
+    const [bl_lat, setBl_lat] = useState([]);
+    const [bl_lng, setBl_lng] = useState(null);
+    const [tr_lat, setTr_lat] = useState(null);
+    const [tr_lng, setTr_lng] = useState(null);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerShown: false,
         });
     },[]);
+
+    useEffect(() => {
+        setIsLoading(true);
+        getPlacesData(bl_lat, bl_lng, tr_lat, tr_lng, type).then((data) => {
+            setMainData(data);
+            setInterval(() => {
+                setIsLoading(false);
+            }, 2000);
+        });
+    }, [bl_lat, bl_lng, tr_lat, tr_lng, type]);
 
     return(
         <SafeAreaView className="flex-1 bg-white relative mt-6">
@@ -45,6 +60,10 @@ const Discover = () => {
 
                     onPress={(data, details = null) => {
                         console.log(details?.geometry?.viewport);
+                        setBl_lat(details?.geometry?.viewport?.southwest?.lat);
+                        setBl_lng(details?.geometry?.viewport?.southwest?.lng);
+                        setTr_lat(details?.geometry?.viewport?.northeast?.lat);
+                        setTr_lng(details?.geometry?.viewport?.northeast?.lng);s
                     }}
                     query={{
                         key: process.env.GOOGLE_KEY,
@@ -97,8 +116,19 @@ const Discover = () => {
                     <View className="px-4 mt-8 flex-row items-center justify-evenly flex-wrap">
                         {mainData?.length > 0 ? (
                             <>
-                                <ItemCardContainer key={"101"} imageSrc={"https://images.unsplash.com/photo-1556383166-eded0173b7fd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1635&q=80"} title="Something a very big" location="Beijing" />
-                                <ItemCardContainer key={"102"} imageSrc={"https://images.unsplash.com/photo-1580541631950-7282082b53ce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80"} title="Sample" location="Carribean" />
+                                { mainData?.map((date, i) => (
+                                    <ItemCardContainer 
+                                        key={i}
+                                        imageSrc={
+                                            data?.photo?.images?.medium?.url
+                                                ? data?.photo?.images?.medium?.url
+                                                : "https://cdn.pixabay.com/photo/2015/10/30/12/22/eat-1014025_1280.jpg"
+                                        }
+                                        title={ data?.name }
+                                        location={data?.location_string}
+                                        data={data}
+                                    />
+                                ))}
                             </>
                         ) : (
                          <>
