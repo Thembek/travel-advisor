@@ -1,16 +1,19 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView, View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView, View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { Attractions, Avatar, Hotels, Restaurants } from '../assets';
+import { Attractions, Avatar, Hotels, NotFound, Restaurants } from '../assets';
 import { FontAwesome } from '@expo/vector-icons';
 
 import MenuContainer from '../components/MenuContainer';
+import ItemCardContainer from '../components/ItemCardContainer';
 
 const Discover = () => {
     const navigation = useNavigation();
 
-    const [type, setType] = useState("restaurants")
+    const [type, setType] = useState("restaurants");
+    const [isLoading, setIsLoading] = useState(false);
+    const [mainData, setMainData] = useState([]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -50,7 +53,12 @@ const Discover = () => {
                 />
             </View>
 
-            <ScrollView>
+            { isLoading ? (
+                <View className="flex-1 items-center justify-center">
+                    <ActivityIndicator size="large" color="#0B646B" />
+                </View>
+            ) : (
+                <ScrollView>
                 <View className="flex-row items-center justify-between px-3 mt-8">
                     <MenuContainer 
                         key={"hotel"}
@@ -87,10 +95,31 @@ const Discover = () => {
                     </View>
 
                     <View className="px-4 mt-8 flex-row items-center justify-evenly flex-wrap">
+                        {mainData?.length > 0 ? (
+                            <>
+                                <ItemCardContainer key={"101"} imageSrc={"https://images.unsplash.com/photo-1556383166-eded0173b7fd?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1635&q=80"} title="Something a very big" location="Beijing" />
+                                <ItemCardContainer key={"102"} imageSrc={"https://images.unsplash.com/photo-1580541631950-7282082b53ce?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80"} title="Sample" location="Carribean" />
+                            </>
+                        ) : (
+                         <>
+                            <View className="w-full h-[300px] items-center space-y-8">
+                                <Image 
+                                    source={NotFound}
+                                    className="w-32 h-32 object-cover"
+                                />
 
+                                <Text className="text-2xl text-[#428288] font-semibold">
+                                    Opps...No Data Found
+                                </Text>
+                            </View>
+                         </>   
+                        )                    
+                        }
+                        
                     </View>
                 </View>
             </ScrollView>
+            )}
         </SafeAreaView>
     );
 } 
